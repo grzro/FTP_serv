@@ -13,8 +13,22 @@ class ConnHandler:
 	def handleSYST(self, arg):
 		self.client.sendMsgData(b"215 UNIX Type: L8\r\n")
 
+	def handleFEAT(self, arg):
+		self.client.sendMsgData(b"211 \r\n") #Server has no features at all
+
+	def handleMDTM(self, arg): # Last file modification time
+		path = self.fileSystem.translatePathToServOrder(arg)
+		time = self.fileSystem.getModTime(path)
+		reply = "213 {}\r\n".format(time)
+		self.client.sendMsgData(bytes(reply, "utf-8"))
+
 	def handlePWD(self, arg):
-		reply = "257 " + self.fileSystem.translatePathToNetOrder(self.fileSystem.getdir()) + "\r\n"
+		'''
+		Actually it has no matter if it is real working directory.
+		'home' allow to work both on Google Chrome and Mozilla Firefox
+		'''
+		path = 'home'
+		reply = "257 " + path + "\r\n"
 		self.client.sendMsgData(bytes(reply, "utf-8"))
 
 	def handleTYPE(self, arg):
@@ -25,11 +39,15 @@ class ConnHandler:
 		self.client.sendMsgData(b"213 123\r\n") # size has no matter in fact
 
 	def handleCWD(self, arg):
-		if self.fileSystem.chdir(self.fileSystem.translatePathToServOrder(arg)):
-			self.client.sendMsgData(b"250 Requested file action completed.\r\n")
-		else:
+		path = self.fileSystem.translatePathToServOrder(arg)
+		try:
+			self.fileSystem.chdir(path) # .translatePath returns None if arg contains '..'
+		except:
 			self.client.sendMsgData(b"550 File not found.\r\n")
 			print('Invalid path')
+			return
+
+		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
 
 	def handlePASV(self, arg):
 		ip, p = self.client.getDTConnInfo()
@@ -77,8 +95,8 @@ class ConnHandler:
 		self.client.sendMsgData(b"221 Good Bye.\r\n")
 	 
 	def commandManagement(self):
-	 
-		self.client.sendMsgData(b"220 Service ready for new user.\r\n") # welcome client
+		#self.fileSystem.resetPath()
+		self.client.sendMsgData(b"220 FTP Server by GrzRo. Hello.\r\n") # welcome client
 		 
 		while self.client.isMsgConnOpen():
 			try:
