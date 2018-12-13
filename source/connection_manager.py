@@ -10,7 +10,7 @@ class ConnectionManager:
 
 	def bindDTConn(self, port: int):
 		if not self.host:
-			print('First bind MSG socket! ( bindMsgConn() )')
+			print('Server: First bind MSG socket! ( bindMsgConn() )')
 			return
 		self.sData = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sData.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -24,7 +24,7 @@ class ConnectionManager:
 
 	def acceptMsgConn(self):
 		self.msgConn, self.addr = self.s.accept()
-		print('Connected by', self.addr)
+		print('Server: Connected by', self.addr)
 		self.s.settimeout(120)
 		self.isMsgSockOpen = True
 

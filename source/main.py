@@ -14,7 +14,7 @@ class ConnHandler:
 		self.client.sendMsgData(b"215 UNIX Type: L8\r\n")
 
 	def handleFEAT(self, arg):
-		self.client.sendMsgData(b"211 \r\n") #Server has no features at all
+		self.client.sendMsgData(b"211 \r\n") #Server has no features
 
 	def handleMDTM(self, arg): # Last file modification time
 		path = self.fileSystem.translatePathToServOrder(arg)
@@ -22,14 +22,30 @@ class ConnHandler:
 		reply = "213 {}\r\n".format(time)
 		self.client.sendMsgData(bytes(reply, "utf-8"))
 
+	# RFC 2228
+	def handleAUTH(self, arg):		#no TLS nor SSL
+		self.client.sendMsgData(b"500 No authorisation.\r\n")
+
+	def handleSITE(self, arg):
+		self.client.sendMsgData(b"202 Im not so helpful.\r\n")
+
 	def handlePWD(self, arg):
 		'''
 		Actually it has no matter if it is real working directory.
-		'home' allow to work both on Google Chrome and Mozilla Firefox
+		'home' allow to work both on Google Chrome (demand it) and 
+		Mozilla Firefox (no matter what we send here)
 		'''
-		path = 'home'
+		path = 'home/'
 		reply = "257 " + path + "\r\n"
 		self.client.sendMsgData(bytes(reply, "utf-8"))
+
+	def handleOPTS(self, arg):
+		if arg == 'utf8on':
+			reply = b"200 utf-8 ON.\r\n"
+		else:
+			reply = b"451 NO OPT\r\n"
+		
+		self.client.sendMsgData(reply)
 
 	def handleTYPE(self, arg):
 		self.client.sendMsgData(b"200 Command ok.\r\n")
@@ -44,7 +60,7 @@ class ConnHandler:
 			self.fileSystem.chdir(path) # .translatePath returns None if arg contains '..'
 		except:
 			self.client.sendMsgData(b"550 File not found.\r\n")
-			print('Invalid path')
+			print('Server: Invalid path')
 			return
 
 		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
@@ -68,12 +84,12 @@ class ConnHandler:
 		self.client.sendDTData(bytes(nameList, "utf-8"))
 		self.client.closeDTConn()
 		self.client.sendMsgData(b'226 Transfer complete\r\n')
-		print('Directories listed')
+		print('Server: Directories listed')
 
 	def handleRETR(self, file):
 		if '.'not in file: # it is not a file
 			self.client.sendMsgData(b"550 Requested action not taken.\r\n")
-			print('invalid path')
+			print('Server: invalid path')
 			return
 
 		self.client.sendMsgData(b"150 Data connection already open; IMAGE transfer starting.\r\n")
@@ -89,7 +105,7 @@ class ConnHandler:
 		self.client.sendDTData(fileContent)
 		self.client.closeDTConn()
 		self.client.sendMsgData(b'226 Transfer complete\r\n')
-		print('File sent')
+		print('Server: File sent')
 
 	def handleQUIT(self, arg):
 		self.client.sendMsgData(b"221 Good Bye.\r\n")
@@ -102,18 +118,19 @@ class ConnHandler:
 			try:
 				self.data = self.client.recvMsg()
 			except:
-				print('no more data from client')
+				print('Server: waiting for client')
 				return
 		 
 			cmd, arg = str(self.data, "utf-8").replace('\r\n', ' ').split(' ', 1)
 			arg = arg.replace(' ', '')
+			cmd = cmd.upper()
 
 			print("Client: {} {}".format(cmd, arg))
 
 			if cmd in self.methods:
 				self.methods[cmd](arg)
 			else:
-				print("Unknown method: " + cmd + arg)
+				print("Server: Unknown method: " + cmd + arg)
 
 	def establish(self, port):
 		self.fileSystem = files.fileSystem()
@@ -133,9 +150,8 @@ class ConnHandler:
 		while True:
 			self.client.listenMsgConn()
 			self.client.listenDTConn()
-			print("Waiting for connections on port: {}".format(port))
+			print("Server: Waiting for connections on port: {}".format(port))
 			self.client.acceptMsgConn()
-			print("Client connected")
 			self.commandManagement()
 		
 if __name__ == '__main__':
