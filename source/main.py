@@ -29,21 +29,25 @@ class ConnHandler:
 	def handleSITE(self, arg):
 		self.client.sendMsgData(b"202 Im not so helpful.\r\n")
 
+	def handlePORT(self, arg):
+		self.client.sendMsgData(b"421 Only PASV.\r\n") #We want to have full control, switch to PASV
+
 	def handlePWD(self, arg):
 		'''
 		Actually it has no matter if it is real working directory.
 		'home' allow to work both on Google Chrome (demand it) and 
 		Mozilla Firefox (no matter what we send here)
 		'''
-		path = 'home/'
+		path = '/'
 		reply = "257 " + path + "\r\n"
 		self.client.sendMsgData(bytes(reply, "utf-8"))
 
 	def handleOPTS(self, arg):
-		if arg == 'utf8on':
-			reply = b"200 utf-8 ON.\r\n"
+		arg = arg.upper()
+		if arg == 'UTF8 ON':
+			reply = b"200 utf-8 ON.\r\n" # reply, YES
 		else:
-			reply = b"451 NO OPT\r\n"
+			reply = b"451 NO OPT\r\n" # No other options
 		
 		self.client.sendMsgData(reply)
 
@@ -77,6 +81,8 @@ class ConnHandler:
 	def handleLIST(self, dir):
 		self.client.sendMsgData(b"150 Data connection already open; IMAGE transfer starting.\r\n")
 		self.client.acceptDTConn()
+
+		print('Server: Client connected on Data Port')
 		
 		if dir in ('-l', ''):
 			nameList = self.fileSystem.getFileList()
@@ -122,7 +128,7 @@ class ConnHandler:
 				return
 		 
 			cmd, arg = str(self.data, "utf-8").replace('\r\n', ' ').split(' ', 1)
-			arg = arg.replace(' ', '')
+			arg = arg.rstrip() # delete last char which is ' '
 			cmd = cmd.upper()
 
 			print("Client: {} {}".format(cmd, arg))

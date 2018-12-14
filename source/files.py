@@ -19,14 +19,12 @@ class fileSystem:
          path = path.replace('home', self.homePath)
       
       path = path.replace('/', '\\')
-      path = path.replace('%20', ' ') # Firefox displays it but it actually works
       return path
 
    def translatePathToNetOrder(self, path):
       home = os.getcwd().replace('/', '\\')
       path = path.replace(self.homePath, 'home')
       path = path.replace('\\', '/')
-      path = path.replace(' ', '%20') # Firefox displays it but it actually works
       return path
 
    def chdir(self, path): # validation of '..' in filepath # SECURITY #######################################################
@@ -64,7 +62,6 @@ class fileSystem:
       nameList = ''
       files = os.listdir(self.getdir())
       for file in files:
-         file = file.replace(' ', '%20') # Firefox displays it but it actually works
          if '.' in file: #it is a file
       # MAKE THE DATA REAL ###########################################################################
             nameList += "-rwxrwx--- 1 root vboxsf 1 Oct 4 21:58 {}\r\n".format(file)
