@@ -9,7 +9,7 @@ class fileSystem:
       self.chdir(self.homePath)
 
    def translatePathToServOrder(self, path):
-      if '..' in path: # command not allowed
+      if '..' in path: # command not allowed, security reasons
          return None
       if path == '' or path == '/':
          path = self.homePath
@@ -27,11 +27,10 @@ class fileSystem:
       path = path.replace('\\', '/')
       return path
 
-   def chdir(self, path): # validation of '..' in filepath # SECURITY #######################################################
+   def chdir(self, path):
       try:
          os.chdir(path)
       except:
-         print("Server: Can not access: " + path)
          raise Exception
       return path
     

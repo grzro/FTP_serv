@@ -38,7 +38,10 @@ class ConnHandler:
 		'home' allow to work both on Google Chrome (demand it) and 
 		Mozilla Firefox (no matter what we send here)
 		'''
-		path = '/'
+
+		#path = '/'
+		path = self.fileSystem.translatePathToNetOrder(self.fileSystem.getdir())
+		print(path)
 		reply = "257 " + path + "\r\n"
 		self.client.sendMsgData(bytes(reply, "utf-8"))
 
@@ -56,16 +59,20 @@ class ConnHandler:
 		self.dataType = arg # IF IT IS IMAGE OR ASCII
 
 	def handleSIZE(self, arg):
-		self.client.sendMsgData(b"213 123\r\n") # size has no matter in fact
+		self.client.sendMsgData(b"550 123\r\n") #213 if ok size has no matter in fact
 
 	def handleCWD(self, arg):
-		path = self.fileSystem.translatePathToServOrder(arg)
 		try:
-			self.fileSystem.chdir(path) # .translatePath returns None if arg contains '..'
+			self.fileSystem.chdir(arg) # try relative path
 		except:
-			self.client.sendMsgData(b"550 File not found.\r\n")
-			print('Server: Invalid path')
-			return
+			try:
+				# try absolute path
+				path = self.fileSystem.translatePathToServOrder(arg)
+				self.fileSystem.chdir(path)
+			except:
+				self.client.sendMsgData(b"550 File not found.\r\n")
+				print('Server: Invalid path: ' + path)
+				return
 
 		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
 
@@ -81,8 +88,6 @@ class ConnHandler:
 	def handleLIST(self, dir):
 		self.client.sendMsgData(b"150 Data connection already open; IMAGE transfer starting.\r\n")
 		self.client.acceptDTConn()
-
-		print('Server: Client connected on Data Port')
 		
 		if dir in ('-l', ''):
 			nameList = self.fileSystem.getFileList()
@@ -93,7 +98,7 @@ class ConnHandler:
 		print('Server: Directories listed')
 
 	def handleRETR(self, file):
-		if '.'not in file: # it is not a file
+		if '.' not in file: # it is not a file
 			self.client.sendMsgData(b"550 Requested action not taken.\r\n")
 			print('Server: invalid path')
 			return
@@ -161,7 +166,7 @@ class ConnHandler:
 			self.commandManagement()
 		
 if __name__ == '__main__':
-	HOST = '0.0.0.0'
+	HOST = '127.0.0.1'
 	PORT = 5022
 
 	srv = ConnHandler()
