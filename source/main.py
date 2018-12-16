@@ -4,19 +4,6 @@ import os
 
 class ConnHandler:
 
-	def handleCDUP(self, arg):
-		currPath = self.fileSystem.getdir()
-		dirs = currPath.split('\\')
-		del dirs[len(dirs) - 1] # remove last dir name
-		newPath = '\\'.join(dirs)
-		print(newPath)
-		if self.fileSystem.validatePath(newPath):
-			self.fileSystem.chdir(newPath) # <-- raises exception
-			self.client.sendMsgData(b"250 Requested file action completed.\r\n")
-		else:
-			self.client.sendMsgData(b"550 File not found.\r\n")
-			print('Server: Invalid path: ' + newPath)
-
 	def handleUSER(self, arg):
 		self.client.sendMsgData(b"331 User name ok, need password.\r\n")
 
@@ -79,6 +66,51 @@ class ConnHandler:
 
 		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
 
+	def handleCDUP(self, arg):
+		currPath = self.fileSystem.getdir()
+		dirs = currPath.split('\\')
+		del dirs[len(dirs) - 1] # remove last dir name
+		newPath = '\\'.join(dirs)
+		print(newPath)
+		if self.fileSystem.validatePath(newPath):
+			self.fileSystem.chdir(newPath) # <-- raises exception
+			self.client.sendMsgData(b"250 Requested file action completed.\r\n")
+		else:
+			self.client.sendMsgData(b"550 File not found.\r\n")
+			print('Server: Invalid path: ' + newPath)
+
+	def handleMKD(self, dirName):
+		try:
+			self.fileSystem.mkdir(dirName)
+		except:
+			self.client.sendMsgData(b"550 Requested action not taken.\r\n")
+			print('Server: Can not create directory: ' + dirName)
+			return
+
+		self.client.sendMsgData(b"257 Directory created\r\n")
+
+		#remove directory
+	def handleRMD(self, dirName):
+		try:
+			self.fileSystem.remdir(dirName)
+		except:
+			self.client.sendMsgData(b"550 Requested action not taken.\r\n")
+			print('Server: Can not remove directory: ' + dirName)
+			return
+
+		self.client.sendMsgData(b"257 Requested file action ok.\r\n")
+
+		#delete file
+	def handleDELE(self, fileName):
+		try:
+			self.fileSystem.deleteFile(fileName)
+		except:
+			self.client.sendMsgData(b"550 Requested action not taken.\r\n")
+			print('Server: Can not delete file: ' + fileName)
+			return
+
+		self.client.sendMsgData(b"250 Requested file action ok.\r\n")
+
 	def handleOPTS(self, arg):
 		arg = arg.upper()
 		if arg == 'UTF8 ON':
@@ -92,8 +124,11 @@ class ConnHandler:
 		self.client.sendMsgData(b"200 Command ok.\r\n")
 		self.dataType = arg # IF IT IS IMAGE OR ASCII
 
-	def handleSIZE(self, arg):
-		self.client.sendMsgData(b"550 123\r\n") #213 if ok size has no matter in fact
+	# it is used to validate if received file has the same size as original
+	def handleSIZE(self, fName):
+		fSize = self.fileSystem.getFileSize(fName)
+		reply = "550 {}\r\n".format(fSize)
+		self.client.sendMsgData(bytes(reply, "utf-8"))
 
 	def handlePASV(self, arg):
 		ip, p = self.client.getDTConnInfo()
@@ -136,6 +171,23 @@ class ConnHandler:
 		self.client.closeDTConn()
 		self.client.sendMsgData(b'226 Transfer complete\r\n')
 		print('Server: File sent')
+
+	def handleSTOR(self, fName):
+		self.client.sendMsgData(b"125 Data connection already open.\r\n")
+		
+		self.client.acceptDTConn()
+		data = self.client.recvDTData()
+		self.client.closeDTConn()
+
+		try:
+			self.fileSystem.storeFile(fName, data)
+		except:
+			self.client.sendMsgData(b"451 Requested action aborted: local error in processing.\r\n")
+			print('Server: Can not create file: ' + fName)
+			return
+
+		self.client.sendMsgData(b"226 Transfer complete\r\n")
+		print('Server: File saved: ' + fName)
 
 	def handleQUIT(self, arg):
 		self.client.sendMsgData(b"221 Good Bye.\r\n")

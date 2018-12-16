@@ -40,6 +40,10 @@ class ConnectionManager:
 	def sendDTData(self, data):
 		self.dataConn.sendall(data)
 
+	def recvDTData(self):
+		data = self.dataConn.recv(4096) #receive up to 4096 bytes of data
+		return data
+
 	def recvMsg(self):
 		data = b''
 		while True:

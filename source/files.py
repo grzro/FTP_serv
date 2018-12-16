@@ -1,4 +1,5 @@
 import os
+import shutil
 from stat import *
 
 class fileSystem:
@@ -41,7 +42,27 @@ class fileSystem:
          os.chdir(path)
       except:
          raise Exception
-    
+
+   def mkdir(self, dirName):
+      try:
+         os.mkdir(dirName)
+      except:
+         raise Exception
+
+   #remove dir even if it contains something
+   def remdir(self, dirName):
+      dirPath = self.getdir() + '\\' + dirName
+      try:
+         shutil.rmtree(dirPath)
+      except:
+         raise Exception
+   
+   def deleteFile(self, fName):
+      try:
+         os.remove(fName)
+      except:
+         raise Exception
+
    def getdir(self):
       return os.getcwd()
 
@@ -61,19 +82,31 @@ class fileSystem:
       f.close()
       return fileContent
 
+   # if there is a file with the same name,
+   # content will be replaced
+   def storeFile(self, fName, fData):
+      try:
+         file = open(fName, 'wb')
+         file.write(fData)
+      except:
+         raise Exception
+
    # get file modification time
    def getModTime(self, path):
       TS = os.stat(path).st_mtime
       return TS
 
+   def getFileSize(self, fName):
+      fPath = self.getdir() + '\\' + fName
+      FS = os.stat(fPath).st_size
+      return FS
 
    def getFileList(self):
       nameList = ''
       files = os.listdir(self.getdir())
       for file in files:
          if '.' in file: #it is a file
-      # MAKE THE DATA REAL ###########################################################################
-            nameList += "-rwxrwx--- 1 root vboxsf 1 Oct 4 21:58 {}\r\n".format(file)
+            nameList += "-rwxrwx--- 1 root vboxsf {} Oct 4 21:58 {}\r\n".format(self.getFileSize(file), file)
          else: # it is a directory
-            nameList += "drwxrwx--- 1 root vboxsf 1 Oct 4 21:58 {}\r\n".format(file)
+            nameList += "drwxrwx--- 1 root vboxsf Oct 4 21:58 {}\r\n".format(file)
       return nameList
