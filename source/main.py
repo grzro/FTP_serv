@@ -35,17 +35,11 @@ class ConnHandler:
 
 	def handlePWD(self, arg):
 		'''
-		Actually it has no matter if it is real working directory.
-		'home' allow to work both on Google Chrome (demand it) and 
-		Mozilla Firefox (no matter what we send here)
-		UPDATE:
 		FF works with everything
 		TotalCommander with current path
 		FileZilla must start from '/'
 		Chrome need to have costant path here f.eg. 'home', no matter on which dir it is operating
 		'''
-
-		#path = '/'
 		path = self.fileSystem.getdir()
 		translatedPath = self.fileSystem.translatePathToNetOrder(path)
 		reply = "257 " + translatedPath + "\r\n"
@@ -71,7 +65,6 @@ class ConnHandler:
 		dirs = currPath.split('\\')
 		del dirs[len(dirs) - 1] # remove last dir name
 		newPath = '\\'.join(dirs)
-		print(newPath)
 		if self.fileSystem.validatePath(newPath):
 			self.fileSystem.chdir(newPath) # <-- raises exception
 			self.client.sendMsgData(b"250 Requested file action completed.\r\n")
@@ -189,12 +182,28 @@ class ConnHandler:
 		self.client.sendMsgData(b"226 Transfer complete\r\n")
 		print('Server: File saved: ' + fName)
 
+	def handleRNFR(self, arg):
+		self.renameFrom = arg
+		self.client.sendMsgData(b"350 Requested file action pending further information.\r\n")
+
+	def handleRNTO(self, arg):
+		try:
+			self.fileSystem.rename(self.renameFrom, arg)
+		except:
+			self.client.sendMsgData(b"553 Can not rename file.\r\n")
+			print("Server: Can not rename file " + self.renameFrom + " to " + arg)
+			return
+		self.client.sendMsgData(b"250 File renamed.\r\n")
+		print("Server: File " + self.renameFrom + " renamed to " + arg)
+
 	def handleQUIT(self, arg):
 		self.client.sendMsgData(b"221 Good Bye.\r\n")
+
+	def sendWelcomeMsg(self):
+		self.client.sendMsgData(b"220 FTP Server by GrzRo. Hello.\r\n")
 	 
 	def commandManagement(self):
-		#self.fileSystem.resetPath()
-		self.client.sendMsgData(b"220 FTP Server by GrzRo. Hello.\r\n") # welcome client
+		self.sendWelcomeMsg()
 		 
 		while self.client.isMsgConnOpen():
 			try:

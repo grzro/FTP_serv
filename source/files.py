@@ -51,7 +51,7 @@ class fileSystem:
 
    #remove dir even if it contains something
    def remdir(self, dirName):
-      dirPath = self.getdir() + '\\' + dirName
+      dirPath = self.convToAbsPath(dirName)
       try:
          shutil.rmtree(dirPath)
       except:
@@ -91,13 +91,19 @@ class fileSystem:
       except:
          raise Exception
 
+   def rename(self, src, targetName):
+      try:
+         os.rename(src, targetName)
+      except:
+         raise Exception
+
    # get file modification time
    def getModTime(self, path):
       TS = os.stat(path).st_mtime
       return TS
 
    def getFileSize(self, fName):
-      fPath = self.getdir() + '\\' + fName
+      fPath = self.convToAbsPath(fName)
       FS = os.stat(fPath).st_size
       return FS
 
@@ -110,3 +116,7 @@ class fileSystem:
          else: # it is a directory
             nameList += "drwxrwx--- 1 root vboxsf Oct 4 21:58 {}\r\n".format(file)
       return nameList
+
+   def convToAbsPath(self, name):
+      path = self.getdir() + '\\' + name
+      return path
