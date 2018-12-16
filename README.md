@@ -4,7 +4,14 @@ This server is using low-level connection handling via sockets. Of course there 
 
 The way that serwer works is based on RFCs: 959, 2228, 2389
 
-13.12.18
+>14.12.18
+Total Commander and Firefox works fine. Fixed bug with spaces in directories names.
+At this moment Google Chrome does not work due to a problem with PWD command.
+TC and FF works with absolute file paths. Chrome works with relative ones. 
+Server can not detect at this moment which way of filepath handling needs to be choosen,
+there is a problem with PWD (Print Working Directory) because every client manage it on his own way.
+
+>13.12.18
 Server works fine with Google Chrome and Mozilla Firefox.
 It allows to list directory, change directory and to download file from the server.
 For security reasons server forbids to use '../' and to move to the 'deeper' directory
