@@ -10,7 +10,7 @@ class fileSystem:
 
    def translatePathToServOrder(self, path):
       if '..' in path: # command not allowed, security reasons
-         return None
+         return ''
       if path == '' or path == '/':
          path = self.homePath
       elif 'home' not in path:
@@ -27,17 +27,26 @@ class fileSystem:
       path = path.replace('\\', '/')
       return path
 
+   #func checks if client doesn't want go deeper than home dir
+   #temporary implementation
+   #useed in CDUP command handler
+   def validatePath(self, path):
+      if self.homePath in path:
+         return True
+      else:
+         return False
+
    def chdir(self, path):
       try:
          os.chdir(path)
       except:
          raise Exception
-      return path
     
    def getdir(self):
       return os.getcwd()
 
-   def getFileContent(self, filePath, mode): # mode: IMAGE(binary) or ASCII (text)
+   # mode: IMAGE(binary) or ASCII (text)
+   def getFileContent(self, filePath, mode):
       if mode == 'I':
          dataMode = 'rb'
       else:
@@ -52,6 +61,7 @@ class fileSystem:
       f.close()
       return fileContent
 
+   # get file modification time
    def getModTime(self, path):
       TS = os.stat(path).st_mtime
       return TS

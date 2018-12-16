@@ -4,6 +4,19 @@ import os
 
 class ConnHandler:
 
+	def handleCDUP(self, arg):
+		currPath = self.fileSystem.getdir()
+		dirs = currPath.split('\\')
+		del dirs[len(dirs) - 1] # remove last dir name
+		newPath = '\\'.join(dirs)
+		print(newPath)
+		if self.fileSystem.validatePath(newPath):
+			self.fileSystem.chdir(newPath) # <-- raises exception
+			self.client.sendMsgData(b"250 Requested file action completed.\r\n")
+		else:
+			self.client.sendMsgData(b"550 File not found.\r\n")
+			print('Server: Invalid path: ' + newPath)
+
 	def handleUSER(self, arg):
 		self.client.sendMsgData(b"331 User name ok, need password.\r\n")
 
@@ -26,24 +39,45 @@ class ConnHandler:
 	def handleAUTH(self, arg):		#no TLS nor SSL
 		self.client.sendMsgData(b"500 No authorisation.\r\n")
 
-	def handleSITE(self, arg):
+	def handleHELP(self, arg):          #HELP SITE
 		self.client.sendMsgData(b"202 Im not so helpful.\r\n")
 
-	def handlePORT(self, arg):
-		self.client.sendMsgData(b"421 Only PASV.\r\n") #We want to have full control, switch to PASV
+		#client opens port to transferr data
+	def handlePORT(self, arg): #We prefer to control Data Transfer #security
+		self.client.sendMsgData(b"421 Only PASV.\r\n") #switch to PASV
 
 	def handlePWD(self, arg):
 		'''
 		Actually it has no matter if it is real working directory.
 		'home' allow to work both on Google Chrome (demand it) and 
 		Mozilla Firefox (no matter what we send here)
+		UPDATE:
+		FF works with everything
+		TotalCommander with current path
+		FileZilla must start from '/'
+		Chrome need to have costant path here f.eg. 'home', no matter on which dir it is operating
 		'''
 
 		#path = '/'
-		path = self.fileSystem.translatePathToNetOrder(self.fileSystem.getdir())
-		print(path)
-		reply = "257 " + path + "\r\n"
+		path = self.fileSystem.getdir()
+		translatedPath = self.fileSystem.translatePathToNetOrder(path)
+		reply = "257 " + translatedPath + "\r\n"
 		self.client.sendMsgData(bytes(reply, "utf-8"))
+
+	def handleCWD(self, arg):
+		try:
+			self.fileSystem.chdir(arg) # try relative path
+		except:
+			try:
+				# try absolute path
+				path = self.fileSystem.translatePathToServOrder(arg)
+				self.fileSystem.chdir(path)
+			except:
+				self.client.sendMsgData(b"550 File not found.\r\n")
+				print('Server: Invalid path: ' + path)
+				return
+
+		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
 
 	def handleOPTS(self, arg):
 		arg = arg.upper()
@@ -60,21 +94,6 @@ class ConnHandler:
 
 	def handleSIZE(self, arg):
 		self.client.sendMsgData(b"550 123\r\n") #213 if ok size has no matter in fact
-
-	def handleCWD(self, arg):
-		try:
-			self.fileSystem.chdir(arg) # try relative path
-		except:
-			try:
-				# try absolute path
-				path = self.fileSystem.translatePathToServOrder(arg)
-				self.fileSystem.chdir(path)
-			except:
-				self.client.sendMsgData(b"550 File not found.\r\n")
-				print('Server: Invalid path: ' + path)
-				return
-
-		self.client.sendMsgData(b"250 Requested file action completed.\r\n")
 
 	def handlePASV(self, arg):
 		ip, p = self.client.getDTConnInfo()
@@ -141,7 +160,7 @@ class ConnHandler:
 			if cmd in self.methods:
 				self.methods[cmd](arg)
 			else:
-				print("Server: Unknown method: " + cmd + arg)
+				print("Server: Unknown method: " + cmd + " " + arg)
 
 	def establish(self, port):
 		self.fileSystem = files.fileSystem()
