@@ -4,6 +4,10 @@ This server is using low-level connection handling via sockets. Of course there 
 
 The way that serwer works is based on RFCs: 959, 2228, 2389
 
+>16.12.2018
+Capabilities of app are much more expanded. Now while working with TotalCommander you can upload file, 
+create and delete directories (files as well) and move to the parent directory (bugfix). Finally client get real file size.
+
 >14.12.18
 Total Commander and Firefox works fine. Fixed bug with spaces in directories names.
 At this moment Google Chrome does not work due to a problem with PWD command.
