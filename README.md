@@ -4,6 +4,9 @@ This server is using low-level connection handling via sockets. Of course there 
 
 The way that serwer works is based on RFCs: 959, 2228, 2389
 
+>17.12.2018
+Added user validation mechanism consisting on a text file with users data in JSON.
+
 >16.12.2018
 Capabilities of app are much more expanded. Now while working with TotalCommander you can upload file, 
 create and delete directories (files as well) and move to the parent directory (bugfix). Finally client get real file size.
@@ -20,6 +23,3 @@ Server works fine with Google Chrome and Mozilla Firefox.
 It allows to list directory, change directory and to download file from the server.
 For security reasons server forbids to use '../' and to move to the 'deeper' directory
 than this where server files are.
-
-Next task is to make it working with FTP clients like FileZilla or TotalCommander.
-In further future I am planning to create a user validation mechanism.
