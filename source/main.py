@@ -1,14 +1,26 @@
 import files
 import connection_manager
+import users
 import os
 
 class ConnHandler:
 
 	def handleUSER(self, arg):
-		self.client.sendMsgData(b"331 User name ok, need password.\r\n")
+		if self.user.checkUser(arg):
+			self.loggingUsr = arg
+			self.client.sendMsgData(b"331 User name ok, need password.\r\n")
+		else:
+			self.loggingUsr = ''
+			self.client.sendMsgData(b"332 Need account for login.\r\n")
+			print("Server: unrezognized user: " + arg)
 
 	def handlePASS(self, arg):
-		self.client.sendMsgData(b"230 User logged in.\r\n")
+		if self.user.checkPassword(self.loggingUsr, arg):
+			self.client.sendMsgData(b"230 User logged in.\r\n")
+		else:
+			self.loggingUsr = ''
+			self.client.sendMsgData(b"530 Invalid password.\r\n")
+			print("Server: invalid password")
 
 	def handleSYST(self, arg):
 		self.client.sendMsgData(b"215 UNIX Type: L8\r\n")
@@ -226,6 +238,8 @@ class ConnHandler:
 	def establish(self, port):
 		self.fileSystem = files.fileSystem()
 		self.client = connection_manager.ConnectionManager()
+		usrFileData = self.fileSystem.loadUsersFile("users.txt")
+		self.user = users.Users(usrFileData)
 
 		# automatically add all methods which starts with 'handle'
 		# to avoid writing if cmd == 'xxxx': handleCMD() many times

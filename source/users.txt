@@ -1,0 +1,6 @@
+{
+	"users": {
+   	"admin": "qweplo",
+   	"user1": "PwD1#"
+	}
+}

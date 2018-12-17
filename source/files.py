@@ -9,6 +9,16 @@ class fileSystem:
    def resetPath(self):
       self.chdir(self.homePath)
 
+   def loadUsersFile(self, path):
+      try:
+         file = open(path, 'r')
+         data = file.read()
+         return data
+      except:
+         raise Exception
+      finally:
+         file.close()
+
    def translatePathToServOrder(self, path):
       if '..' in path: # command not allowed, security reasons
          return ''
@@ -29,7 +39,6 @@ class fileSystem:
       return path
 
    #func checks if client doesn't want go deeper than home dir
-   #temporary implementation
    #useed in CDUP command handler
    def validatePath(self, path):
       if self.homePath in path:
@@ -75,11 +84,12 @@ class fileSystem:
 
       try:
          f = open(filePath, dataMode)
+         fileContent = f.read()
       except:
          return None
+      finally:
+         f.close()
 
-      fileContent = f.read()
-      f.close()
       return fileContent
 
    # if there is a file with the same name,
@@ -90,6 +100,8 @@ class fileSystem:
          file.write(fData)
       except:
          raise Exception
+      finally:
+         file.close()
 
    def rename(self, src, targetName):
       try:
@@ -104,8 +116,11 @@ class fileSystem:
 
    def getFileSize(self, fName):
       fPath = self.convToAbsPath(fName)
-      FS = os.stat(fPath).st_size
-      return FS
+      try:
+         FS = os.stat(fPath).st_size
+         return FS
+      except:
+         return 0
 
    def getFileList(self):
       nameList = ''
@@ -114,7 +129,7 @@ class fileSystem:
          if '.' in file: #it is a file
             nameList += "-rwxrwx--- 1 root vboxsf {} Oct 4 21:58 {}\r\n".format(self.getFileSize(file), file)
          else: # it is a directory
-            nameList += "drwxrwx--- 1 root vboxsf Oct 4 21:58 {}\r\n".format(file)
+            nameList += "drwxrwx--- 1 root vboxsf 0 Oct 4 21:58 {}\r\n".format(file)
       return nameList
 
    def convToAbsPath(self, name):
